@@ -1,0 +1,13 @@
+[project]
+name = "myapp"
+version = "0.1.0"
+description = "A minimal FastAPI project"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.121.0",
+    "uvicorn>=0.38.0",
+    "sqlalchemy>=1.4.0",
+    "pymysql>=1.0.0",
+    "passlib[bcrypt]<=1.7.4"
+]

@@ -15,14 +15,11 @@ class ReservationBase(BaseModel):
 
 # 1. Esquema para Crear una nueva Reserva (Input/POST)
 class ReservationCreate(ReservationBase):
-    # keyreserva se podría generar automáticamente, pero lo incluimos si es requerido al crear
     keyreserva: str = Field(..., description="Clave única o código de la reserva")
-    # *** CORRECCIÓN: AGREGAMOS EL ESTADO YA QUE ES REQUERIDO POR EL REPOSITORIO ***
     estado: str = Field(..., description="Estado inicial de la reserva (p. ej., 'Pendiente')")
 
-# 2. Esquema para Actualizar una Reserva (Input/PATCH)
-class ReservationUpdate(ReservationBase):
-    # Todos los campos son opcionales para una actualización parcial (PATCH)
+# 2. Esquema para Actualizar una Reserva (Input/PATCH) - ¡PERFECTO para PATCH!
+class ReservationUpdate(BaseModel): # Heredar de BaseModel para que todos sean opcionales
     keyreserva: Optional[str] = None
     fecha: Optional[date] = None
     hora: Optional[time] = None
@@ -32,6 +29,10 @@ class ReservationUpdate(ReservationBase):
     valor: Optional[float] = None
     userid: Optional[int] = None
     estado: Optional[str] = None # Podemos permitir actualizar el estado (p. ej., 'confirmada', 'cancelada')
+    
+    # Aseguramos que la actualización no pueda ser completamente vacía
+    def is_empty(self) -> bool:
+        return all(v is None for v in self.model_dump().values())
 
 # 3. Esquema para la Respuesta (Output)
 class Reservation(ReservationBase):

@@ -23,12 +23,12 @@ class ReservationService:
         db_reservation = self.repo.create(reservation_in)
         return ReservationSchema.model_validate(db_reservation)
 
-    # 2. READ ALL
+    # 2. READ ALL (CORRECTO)
     def get_all_reservations(self, skip: int = 0, limit: int = 100) -> List[ReservationSchema]:
         reservations = self.repo.get_all(skip=skip, limit=limit)
         return [ReservationSchema.model_validate(r) for r in reservations]
 
-    # 3. READ ONE
+    # 3. READ ONE (CORRECTO)
     def get_reservation_by_id(self, idreserva: int) -> ReservationSchema:
         reservation = self.repo.get_by_id(idreserva)
         if not reservation:
@@ -38,7 +38,7 @@ class ReservationService:
             )
         return ReservationSchema.model_validate(reservation)
 
-    # 4. UPDATE
+    # 4. UPDATE (PENDIENTE DE IMPLEMENTAR EN REPO)
     def update_reservation(self, idreserva: int, reservation_in: ReservationUpdate) -> ReservationSchema:
         db_reservation = self.repo.get_by_id(idreserva)
         if not db_reservation:
@@ -52,7 +52,7 @@ class ReservationService:
         updated_reservation = self.repo.update(db_reservation, reservation_in)
         return ReservationSchema.model_validate(updated_reservation)
 
-    # 5. DELETE
+    # 5. DELETE (PENDIENTE DE IMPLEMENTAR EN REPO)
     def delete_reservation(self, idreserva: int) -> None:
         db_reservation = self.repo.get_by_id(idreserva)
         if not db_reservation:

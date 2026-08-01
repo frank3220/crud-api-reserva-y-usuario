@@ -1,36 +1,61 @@
+﻿# dependencies/database.py
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from typing import Generator
-from sqlalchemy.orm import Session # Importado para tipado
+from sqlalchemy.orm import Session
 
 
-# ----------------------------------------------------
-# 1. Configuración de la URL de la Base de Datos
-# La URL de tu base de datos MariaDB (mluna) es correcta.
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:root123@127.0.0.1:3306/mluna"
-# ----------------------------------------------------
+# ======================================================
+# 1. CONFIGURACIÃ“N DEL MOTOR Y BASE
+# ======================================================
+from utils.settings import DATABASE_URL
+SQLALCHEMY_DATABASE_URL = DATABASE_URL
 
-# Crea el motor de SQLAlchemy
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    # ❌ SE ELIMINÓ: El argumento connect_args es inválido para MariaDB/MySQL 
-    #                y causaba el error 'check_same_thread'.
+    pool_pre_ping=True,          # Evita conexiones muertas
 )
 
-# Crea la clase SessionLocal
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
 
-# Base para los modelos
+# Base para los modelos â€” debe declararse *antes* de importar modelos
 Base = declarative_base()
 
 
-# ----------------------------------------------------
-# 2. La función de dependencia 'get_db' (Generador)
-# ----------------------------------------------------
+# ======================================================
+# 2. FUNCIÃ“N get_db
+# ======================================================
 def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
-        yield db  # Proporciona la sesión al endpoint/servicio
+        yield db
     finally:
-        db.close() # Asegura que la sesión se cierre después de la petición
+        db.close()
+
+
+# ======================================================
+# 3. IMPORTACIÃ“N DE MODELOS (DESPUÃ‰S DE CREAR Base)
+# ======================================================
+# âš ï¸ IMPORTANTE
+# Estos imports SIEMPRE DEBEN ESTAR AL FINAL
+# para evitar CIRCULAR IMPORTS.
+# ======================================================
+
+from models.ocupacion import Ocupacion
+from models.room import tshabitacion
+from models.acpm import AcpmLog
+from models.arqueo import ArqueoTurno
+from models.arqueo_actual import ArqueoActual  # â† ya puedes importarlo sin error
+
+
+# ======================================================
+# 4. CREACIÃ“N AUTOMÃTICA DE TABLAS
+# ======================================================
+Base.metadata.create_all(bind=engine)
+

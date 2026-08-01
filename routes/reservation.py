@@ -13,7 +13,7 @@ from services.reservation import ReservationService
 
 
 router = APIRouter(
-    prefix="/reservations",
+    prefix="/reservas", # <--- ¡CAMBIADO de /reservations a /reservas!
     tags=["Reservations"]
 )
 
@@ -32,7 +32,7 @@ def create_reservation_route(
     return service.create_reservation(reservation_in)
 
 
-# 2. READ ALL (GET)
+# 2. READ ALL (GET) - ¡Funcionalidad agregada!
 @router.get(
     "/", 
     response_model=List[ReservationSchema],
@@ -47,7 +47,7 @@ def get_all_reservations_route(
     return service.get_all_reservations(skip=skip, limit=limit)
 
 
-# 3. READ ONE (GET by ID)
+# 3. READ ONE (GET by ID) - ¡Funcionalidad agregada!
 @router.get(
     "/{idreserva}", 
     response_model=ReservationSchema,
@@ -61,7 +61,7 @@ def get_reservation_by_id_route(
     return service.get_reservation_by_id(idreserva)
 
 
-# 4. UPDATE (PATCH)
+# 4. UPDATE (PATCH) - Pendiente de implementar lógica en Repositorio
 @router.patch(
     "/{idreserva}", 
     response_model=ReservationSchema,
@@ -76,7 +76,7 @@ def update_reservation_route(
     return service.update_reservation(idreserva, reservation_in)
 
 
-# 5. DELETE (DELETE)
+# 5. DELETE (DELETE) - Pendiente de implementar lógica en Repositorio
 @router.delete(
     "/{idreserva}", 
     status_code=status.HTTP_204_NO_CONTENT,

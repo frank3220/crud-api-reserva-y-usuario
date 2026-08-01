@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 
 class UsuarioBase(BaseModel):
@@ -7,13 +7,13 @@ class UsuarioBase(BaseModel):
     rol: str
 
 class UsuarioCreate(UsuarioBase):
-    password: str
+    password: str = Field(min_length=8)
 
 class UsuarioUpdate(UsuarioBase):
     nombre: Optional[str] = None
     email: Optional[str] = None
     rol: Optional[str] = None
-    password: Optional[str] = None
+    password: Optional[str] = Field(default=None, min_length=8)
 
 class Usuario(UsuarioBase):
     idusuario: int # CRÍTICO: Asegúrate de que este nombre coincida con la clave primaria en models/usuario.py

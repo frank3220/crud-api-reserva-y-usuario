@@ -1,48 +1,63 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from dependencies.database import get_db
-from schemas.usuario import UsuarioCreate, Usuario # Esquemas para entrada/salida
-from services.usuario import UsuarioService # Importa la clase de servicio
 from typing import List
 
-router = APIRouter(prefix="/api/v1/usuarios", tags=["Usuarios"])
+# Importaciones de tu estructura de carpetas
+from dependencies.database import get_db
+from schemas.usuario import UsuarioCreate, Usuario
+from services.usuario import UsuarioService
 
-# Dependencia para obtener la sesión de DB y crear el servicio
+router = APIRouter(tags=["Usuarios"])
+
 def get_service(db: Session = Depends(get_db)):
-    """Inyecta la instancia del servicio de usuario."""
     return UsuarioService(db)
 
-@router.post("/", response_model=Usuario, status_code=status.HTTP_201_CREATED)
-def create_usuario_route(
-    usuario_in: UsuarioCreate,
-    service: UsuarioService = Depends(get_service) # Inyecta el servicio
-):
-    """
-    Crea un nuevo usuario en la base de datos.
-    """
-    # El servicio/repositorio maneja el hashing de la contraseña y las excepciones
-    try:
-        new_user = service.create_usuario(usuario_in)
-        return new_user
-    except HTTPException as e:
-        # Re-lanza la excepción (ej. 400 por email duplicado desde el repositorio)
-        raise e
+# ===============================
+# LOGIN
+# ===============================
+@router.post("/auth/login")
+def login(email: str, password: str, service: UsuarioService = Depends(get_service)):
+    # Llama a tu lógica de service que ya genera el token JWT y el rol
+    return service.login(email, password)
 
-@router.get("/", response_model=List[Usuario])
-def read_usuarios_route(service: UsuarioService = Depends(get_service)):
-    """
-    Obtiene todos los usuarios.
-    """
+# ===============================
+# GESTIÓN DE PERSONAL (CRUD)
+# ===============================
+
+@router.get("/api/v1/usuarios", response_model=List[Usuario])
+def listar_usuarios(service: UsuarioService = Depends(get_service)):
+    """ Trae la lista de empleados para la tabla """
     return service.get_all_usuarios()
 
-@router.get("/{usuario_id}", response_model=Usuario)
-def read_usuario_by_id_route(usuario_id: int, service: UsuarioService = Depends(get_service)):
-    """
-    Obtiene un usuario por su ID.
-    """
-    db_usuario = service.get_usuario_by_id(usuario_id)
-    if db_usuario is None:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return db_usuario
+@router.post("/api/v1/usuarios", response_model=Usuario)
+def crear_usuario(usuario: UsuarioCreate, service: UsuarioService = Depends(get_service)):
+    """ Registra un nuevo empleado """
+    db_user = service.get_usuario_by_email(usuario.email)
+    if db_user:
+        raise HTTPException(status_code=400, detail="El correo ya está registrado")
+    return service.create_usuario(usuario)
 
-# Nota: Puedes añadir aquí las rutas de PUT y DELETE si las necesitas.
+@router.delete("/api/v1/usuarios/{usuario_id}")
+def eliminar_usuario(
+    usuario_id: int, 
+    db: Session = Depends(get_db), 
+    service: UsuarioService = Depends(get_service)
+):
+    """
+    Busca y elimina al usuario directamente usando la base de datos
+    """
+    # 1. Buscamos al usuario usando el ID (asegúrate que en tu service se llame get_usuario_by_id)
+    user = service.get_usuario_by_id(usuario_id)
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    try:
+        # 2. Ejecutamos el borrado físico en la DB
+        db.delete(user)
+        db.commit()
+        return {"detail": "Usuario eliminado correctamente"}
+    except Exception as e:
+        db.rollback()
+        print(f"ERROR AL ELIMINAR: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno al eliminar")
